@@ -22,7 +22,7 @@ const register=async (req,res)=>{
         });
         await user.save();
         const token = jwt.sign({_id:user._id},process.env.TOKEN_SECRET);
-        return res.json({authtoken:token,profile:user});
+        return res.json({authToken:token,profile:user});
     }
     catch(err)
     {
