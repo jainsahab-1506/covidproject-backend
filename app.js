@@ -20,6 +20,6 @@ mongoose.connect("mongodb+srv://arpanjain:"+process.env.CLUSTER_PASSWORD+ "@clus
     res.send("Hello")
   })//
   app.use("/",AuthRouter);
-app.listen(8000,function(req,res){
+app.listen(process.env.PORT || 8000,function(req,res){
   console.log("Running")
 })
