@@ -1,0 +1,64 @@
+const Post = require("../PostSchema");
+const jwt = require("jsonwebtoken");
+const sgMail = require('@sendgrid/mail')
+const User=require("../model")
+const  moment  = require("moment");
+sgMail.setApiKey(process.env.EmailAPI);//
+
+
+const createpost=async (req,res)=>{
+    try{
+        const authHeader = req.headers.authorization;
+        if (!authHeader.startsWith("Bearer ")) {
+          return res.status(400).json({
+            error: "Invalid request headers.",
+          });
+        }
+        var tokenData = authHeader.split(" ")[1];
+        if (!tokenData) {
+          return res.status(400).json({
+            error: "Invalid token.",
+          });
+        }
+        tokenData = jwt.decode(tokenData);
+        
+        const user =await User.findById(tokenData._id);
+        if(!user){
+            return res.status(400).json({error:"Invalid Token"});
+        }
+        const {message}=req.body;
+        var date = moment().format("dddd, MMMM Do YYYY, h:mm a");  
+        const post=new Post({
+            message,Date:date,ownerid:user._id
+        })
+        await post.save();
+        if(user.admin)
+        {
+          const allUser = await User.find({subscribe:true});
+          console.log(allUser);
+          allUser.forEach(async (element) => {
+            try{
+              const msg = {
+                to: element.email,
+                from: "raghavbhandari3@gmail.com",
+                subject: "Welcome to the covid community",
+                html: `<h1>${message}</h1>`
+                }
+                await sgMail.send(msg)
+                console.log("Email sent");
+            }
+            catch(err)
+            {
+              console.log(err);
+            }
+          });
+        }
+        return res.status(200).json(post);
+    }
+    catch(err)
+    {
+        console.log(err);
+        return res.status(500).json({error:"Server error"});
+    }
+}
+module.exports=createpost;
